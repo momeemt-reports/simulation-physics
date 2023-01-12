@@ -1,0 +1,10 @@
+@require: stdjareport
+
+document (|
+  title = {第1回 シミュレーション物理 レポート};
+  author = {momeemt};
+|) '<
+  +p {
+    テスト
+  }
+>

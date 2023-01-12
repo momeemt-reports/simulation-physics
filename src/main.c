@@ -58,6 +58,7 @@ int make_circle_graph () {
     fprintf(gnu_plot, "set xrange [-1:1]\n");
     fprintf(gnu_plot, "set yrange [-1:1]\n");
     fprintf(gnu_plot, "set size ratio 1\n");
+    fprintf(gnu_plot, "unset key\n");
     fprintf(gnu_plot, "plot \"data.dat\"\n");
     pclose(gnu_plot);
     return 0;

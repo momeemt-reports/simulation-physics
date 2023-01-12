@@ -8,3 +8,4 @@ main.out: src/main.c
 .PHONY: clean
 clean:
 	rm -f *.out
+	rm graph.png data.dat

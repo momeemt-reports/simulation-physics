@@ -1,3 +1,10 @@
 *.out
 data.dat
 graph.png
+
+# 授業資料
+/documents
+
+# SATySFi
+main.pdf
+main.satysfi-aux

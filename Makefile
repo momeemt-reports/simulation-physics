@@ -7,7 +7,7 @@ report1: report/week1/main.saty
 	satysfi report/week1/main.saty
 
 main.out: src/main.c
-	gcc src/main.c -o main.out
+	gcc src/main.c -o main.out -lm
 
 .PHONY: clean
 clean:

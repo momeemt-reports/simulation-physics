@@ -2,9 +2,31 @@
 
 document (|
   title = {第1回 シミュレーション物理 レポート};
-  author = {momeemt};
+  author = {浅田睦葉};
 |) '<
-  +p {
-    テスト
-  }
+  +section {実験の目的} <
+    +p {
+
+    }
+  >
+  +section {実験方法} <
+    +p {
+      実験にはMacbook Pro（チップ: Apple M1 Max）を使用した。
+      プログラムはC言語で作成し、Apple clang version 14.0.0 (clang-1400.0.29.202)を用いてコンパイルを行った。
+      このコンパイラはarm64-apple-darwin22.1.0をターゲットにしている。
+      図の描画にはgnuplot 5.4 patchlevel 5を用いた。
+    }
+  >
+  +section {実験結果} <
+    +p {
+      図1は、発生させた500組の乱数の組${x, y}から作成した散布図である。
+      横軸は${x}の値を、縦軸は${y}の値を示している。
+    }
+    +p {
+      図2は、${-1 \leq x \leq 1}
+    }
+  >
+  +section {考察} <
+
+  >
 >

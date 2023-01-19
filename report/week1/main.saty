@@ -1,32 +1,198 @@
 @require: stdjareport
+@require: image/image
+@require: easytable/easytable
+@require: code-printer/code-printer
+@require: code-printer/code-syntax
+@require: code-printer/code-theme
+@require: enumitem/enumitem
 
+open EasyTableAlias
+open EnumitemAlias
+let-block ctx +center it =
+  line-break true true ctx (inline-fil ++ read-inline ctx it ++ inline-fil)
+in
 document (|
-  title = {第1回 シミュレーション物理 レポート};
+  title = {シミュレーション物理 レポート 演習課題(1)};
   author = {浅田睦葉};
 |) '<
-  +section {実験の目的} <
+  +chapter {実験の目的} <
     +p {
-
+      本実験の目的は、ヒットミス法を用いて半径1の円の面積を求めることである。
     }
   >
-  +section {実験方法} <
+  +chapter {実験方法} <
+    +p {
+      2つの実験を行った。
+      本レポートでは、演習課題（1）の①を実験1、演習課題（1）の②を実験2とする。
+    }
     +p {
       実験にはMacbook Pro（チップ: Apple M1 Max）を使用した。
       プログラムはC言語で作成し、Apple clang version 14.0.0 (clang-1400.0.29.202)を用いてコンパイルを行った。
       このコンパイラはarm64-apple-darwin22.1.0をターゲットにしている。
       図の描画にはgnuplot 5.4 patchlevel 5を用いた。
-    }
-  >
-  +section {実験結果} <
-    +p {
-      図1は、発生させた500組の乱数の組${x, y}から作成した散布図である。
-      横軸は${x}の値を、縦軸は${y}の値を示している。
+      プログラムの実装にはVisual Studio Code バージョン: 1.74.3を用いた。
     }
     +p {
-      図2は、${-1 \leq x \leq 1}
+      実験では、まず最初に定数`RAND_SEED`を用いてシードを設定した。
+      シード値は3桁の素数である${193}を用いた。
+      実験1では乱数の組を生成して条件を満たさないものを取り除いた。
+      その後、条件を満たす500組の乱数の組をすべてdatファイルに出力してgnuplotに受け渡し描画結果を画像として出力した。
+      実験2では生成した乱数を用いてヒットミス法を実装し、乱数の組（点）の数・面積の平均値（10試行）・（${\pi} - 面積の平均値）÷ ${\pi}を標準出力した。
     }
   >
-  +section {考察} <
+  +chapter {実験結果} <
+    +section {実験1} <
+      +center {
+        \include-image?:(300pt)(`../../graph.jpg`);
+      }
+      +center {
+        図1. 乱数の組から作成した散布図
+      }
+      +p {
+        図1は、${x^2+y^2 \leq 1}を満たす500組の乱数の組${x, y}から作成した散布図である。
+        横軸は${x}の値を、縦軸は${y}の値を示している。
+        図1から、次のことがわかる。
+      }
+      +enumerate {
+        * 点は半径${1}で中心が${(0, 0)}の円の中に分布した。
+        * 点は均等に分布しない。
+      }
+    >
+    +section {実験2} <
+      +center {
+        表1. ヒットミス法による面積の近似
+      }
+      +easytable?:[rect; m 1; m 2; v 1; v 2; v 3][l;c;c;c] {
+      | 乱数の組（点）の数 | 100 | 1000 | 10000
+      | 面積の平均値（10試行） | 3.092000 | 3.131600 | 3.141600
+      | （${\pi} - 面積の平均値）÷ ${\pi} | 0.015785 | 0.003180 | -0.000003
+      |}
+      +p {
+        表1は、${-1 \leq x \leq 1, -1 \leq y \leq 1}を満たす乱数の組${(x, y)}を発生させ、ヒットミス法で面積を近似した結果を表している。
+        ${\pi = 3.14159}として計算を行った。
+        また、本レポートでは（${\pi} - 面積の平均値）÷ ${\pi}を相対誤差と呼ぶ。
+        表1から、次のことがわかる。
+      }
+      +enumerate {
+        * 乱数の組の数が多くなるにつれて面積の平均値は${3.14159}に近づき、相対誤差も小さくなった。
+      }
+    >
+  >
+  +chapter {考察} <
+    +p {
+      実験1では、${x^2 + y^2 \leq 1}を満たす乱数の組のみを対象のデータとして扱った。
+      したがって、半径${1}で中心が${(0, 0)}の円に分布することは当然である。
+      また、C言語の`rand`関数は一様乱数であるが、各々の数が等しい確率で出現し、かつ任意の${i, j}に対して${i}番目の数と${j}番目の数は独立する性質を持つ。
+      点が円の中で均等に分布するとき、後者の性質である無規則性が成立しないため、点が均等に分布しないことも当然である。
+    }
+    +p {
+      実験2について、点が円の内側に描画される確率は${\frac{\pi}{4}}である。
+      大数の法則により、試行回数を増やすと円の内側に描画される確率は${\frac{\pi}{4}}に近づく。
+      したがって、点が描画される可能性のある面積である${4}に対して、${4 \times \frac{\pi}{4} = \pi}となるから、ヒットミス法を用いて半径1の面積を求めることができた。
+    }
+  >
+  +chapter {プログラムリスト} <
+    +code-printer ?:(
+      CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+    ) (`#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
 
+#define GENERATE_POINTS_COUNT 500
+#define RAND_SEED 193
+#define PI 3.14159
+#define TRIAL 10
+
+typedef struct {
+    double x;
+    double y;
+} point_t;
+
+double rand_double () {
+    return (2.0 * rand()) / (RAND_MAX + 1.0) - 1.0;
+}
+
+point_t rand_point () {
+    point_t point;
+    point.x = rand_double();
+    point.y = rand_double();
+    return point;
+}
+
+bool is_in_unit_circle (point_t *point) {
+    return pow(point->x, 2) + pow(point->y, 2) <= 1;
+}
+
+void generate_rand_points_in_circle (point_t *points) {
+    int generated_count = 0;
+    while (generated_count < GENERATE_POINTS_COUNT) {
+        point_t point = rand_point();
+        if (is_in_unit_circle(&point)) {
+            points[generated_count] = point;
+            generated_count++;
+        }
+    }
+}
+
+int make_circle_graph () {
+    point_t points[GENERATE_POINTS_COUNT];
+    srand(RAND_SEED);
+    generate_rand_points_in_circle(points);
+    
+    FILE *data_file = fopen("data.dat", "w");
+    if (data_file == NULL) {
+        fprintf(stderr, "failed to open data.dat.");
+        return 1;
+    }
+    for (int i = 0; i < GENERATE_POINTS_COUNT; i++) {
+        fprintf(data_file, "%f %f\n", points[i].x, points[i].y);
+    }
+
+    FILE *gnu_plot = popen("gnuplot", "w");
+    fprintf(gnu_plot, "set terminal jpeg\n");
+    fprintf(gnu_plot, "set output \"graph.jpg\"\n");
+    fprintf(gnu_plot, "set xrange [-1:1]\n");
+    fprintf(gnu_plot, "set yrange [-1:1]\n");
+    fprintf(gnu_plot, "set xlabel \"x\"\n");
+    fprintf(gnu_plot, "set ylabel \"y\"\n");
+    fprintf(gnu_plot, "set size ratio 1\n");
+    fprintf(gnu_plot, "unset key\n");
+    fprintf(gnu_plot, "plot \"data.dat\"\n");
+    pclose(gnu_plot);
+    return 0;
+}
+
+void hit_and_miss (int count) {
+    srand(RAND_SEED);
+    double average_area = 0.0;
+    for (int i = 0; i < TRIAL; i++) {
+        int hit = 0;
+        for (int j = 0; j < count; j++) {
+            point_t point = rand_point();
+            if (pow(point.x, 2) + pow(point.y, 2) <= 1.0) {
+                hit++;
+            }
+        }
+        average_area += (double)hit / (double)count / (double)TRIAL * 4.0;
+    }
+    printf("-------------点の数: %d-------------\n", count);
+    printf("面積の平均値(10試行): %f\n", average_area);
+    printf("(π-面積の平均値)/π: %f\n", (PI - average_area) / PI);
+}
+
+int main () {
+    // 課題1
+    if (make_circle_graph()) {
+        return 1;
+    }
+    // 課題2
+    hit_and_miss(100);
+    hit_and_miss(1000);
+    hit_and_miss(10000);
+    return 0;
+}
+`);
   >
 >

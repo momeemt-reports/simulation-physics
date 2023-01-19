@@ -54,7 +54,7 @@ int make_circle_graph () {
     return 0;
 }
 
-void hit_and_miss (int count) {
+int hit_and_miss (int count) {
     srand(RAND_SEED);
     double average_area = 0.0;
     for (int i = 0; i < TRIAL; i++) {
@@ -70,4 +70,5 @@ void hit_and_miss (int count) {
     printf("-------------点の数: %d-------------\n", count);
     printf("面積の平均値(10試行): %f\n", average_area);
     printf("(π-面積の平均値)/π: %f\n", (PI - average_area) / PI);
+    return 0;
 }

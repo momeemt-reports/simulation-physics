@@ -21,6 +21,6 @@ point_t rand_point ();
 bool is_in_unit_circle (point_t *point);
 void generate_rand_points_in_circle (point_t *points);
 int make_circle_graph ();
-void hit_and_miss (int count);
+int hit_and_miss (int count);
 
 #endif

@@ -6,6 +6,11 @@ run: main.out
 report1: report/week1/main.saty
 	satysfi ./report/week1/main.saty
 
+.PHONY: report2
+report2: report/week2/main.saty
+	satysfi ./report/week2/main.saty
+	pdfunite ./report/week2/hyoshi.pdf ./report/week2/main.pdf week2.pdf
+
 main.out: src/main.c
 	mkdir -p obj out
 	gcc -c src/hit_miss.c -o obj/hit_miss.o

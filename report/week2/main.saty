@@ -1,0 +1,339 @@
+@require: stdjareport
+@require: image/image
+@require: enumitem/enumitem
+@require: code-printer/code-printer
+@require: code-printer/code-syntax
+@require: code-printer/code-theme
+
+open EnumitemAlias
+let-block ctx +center it =
+  line-break true true ctx (inline-fil ++ read-inline ctx it ++ inline-fil)
+in
+document (|
+  title = {シミュレーション物理 レポート 演習課題(2)};
+  author = {浅田睦葉};
+|) '<
+  +chapter {実験の目的} <
+    +p {
+      本実験の目的は、184番規則に従うセルオートマトンを作成することである。
+    }
+  >
+  +chapter {実験方法} <
+    +p {
+      実験には、Macbook Pro（チップ: Apple M1 Max）を使用した。
+      Dockerを利用して、Ubuntu 22.04.1 LTS 環境を立て、その上でC言語でプログラムを作成して実行した。
+      コンパイルにはgcc 11.2.0を用いた。このコンパイラはUbuntu 11.2.0-19ubuntu1をターゲットにしている。
+      PPMフォーマットの画像を出力し、FFmpegを利用してJPEG形式に変換した\footnote{レポートの作成に用いているSATySFiではJPEGフォーマットのみをサポートしているため。}。
+      プログラムの実装にはVisual Studio Code バージョン: 1.74.3を用いた。
+    }
+    +p {
+      実験では、まず最初に定数`RAND_SEED`を用いてシードを設定した。
+      シード値は3桁の素数である149、193、251、383、457を用い、それぞれで実験を行った。
+      最初に、要素数が20である配列を定義する。
+      `fill_density_array`関数に配列と初期密度を渡して、配列に値をセットする。
+      区間${\[0, 1\)}における一様乱数が初期密度より小さいとき、状態「1」を代入する。
+    }
+    +p {
+      `run_and_output_state_to_ppm`関数にパスと配列、倍率`magnification`を渡して、空間時間図を生成する。
+      セルオートマトンは184番規則に従うから、${i-1, i, i+1}番目の状態を3ビットの整数値と見做した。
+      ${3, 4, 5, 7}の値を取る場合、次の状態は${1}となり、そうでない場合は${0}となる。
+      画像出力の際、等倍（${magnification = 1}）で生成すると解像度が小さく見辛いため、縦と横のピクセル数を50倍に設定した。
+    }
+  >
+  +chapter {実験結果} <
+    +p {
+      5つのシード値である149、193、251、383、457で初期化して得られた結果を示す。
+    }
+    +section {シード値 149} <
+      +center {
+        \include-image?:(90pt)(`../../out/30-percent-seed-149.jpeg`);
+      }
+      +center {
+        図1. 初期密度0.3に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/50-percent-seed-149.jpeg`);
+      }
+      +center {
+        図2. 初期密度0.5に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/70-percent-seed-149.jpeg`);
+      }
+      +center {
+        図3. 初期密度0.7に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+    >
+    +section {シード値 193} <
+      +center {
+        \include-image?:(90pt)(`../../out/30-percent-seed-193.jpeg`);
+      }
+      +center {
+        図4. 初期密度0.3に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/50-percent-seed-193.jpeg`);
+      }
+      +center {
+        図5. 初期密度0.5に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/70-percent-seed-193.jpeg`);
+      }
+      +center {
+        図6. 初期密度0.7に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+    >
+    +section {シード値 251} <
+      +center {
+        \include-image?:(90pt)(`../../out/30-percent-seed-251.jpeg`);
+      }
+      +center {
+        図7. 初期密度0.3に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/50-percent-seed-251.jpeg`);
+      }
+      +center {
+        図8. 初期密度0.5に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/70-percent-seed-251.jpeg`);
+      }
+      +center {
+        図9. 初期密度0.7に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+    >
+    +section {シード値 383} <
+      +center {
+        \include-image?:(90pt)(`../../out/30-percent-seed-383.jpeg`);
+      }
+      +center {
+        図10. 初期密度0.3に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/50-percent-seed-383.jpeg`);
+      }
+      +center {
+        図11. 初期密度0.5に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/70-percent-seed-383.jpeg`);
+      }
+      +center {
+        図12. 初期密度0.7に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+    >
+    +section {シード値 457} <
+      +center {
+        \include-image?:(90pt)(`../../out/30-percent-seed-457.jpeg`);
+      }
+      +center {
+        図13. 初期密度0.3に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/50-percent-seed-457.jpeg`);
+      }
+      +center {
+        図14. 初期密度0.5に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+      +center {
+        \include-image?:(90pt)(`../../out/70-percent-seed-457.jpeg`);
+      }
+      +center {
+        図15. 初期密度0.7に対する空間時間図（${t = 0 \sim 20, i = 1 \sim 20}）
+      }
+    >
+    +p {
+      図1〜15は、それぞれの初期密度に対する空間時間図である。
+      図から、次のことがわかる。
+    }
+    +enumerate {
+      * 初期密度が0.3である、図1、図4、図7、図10、図13のすべてにおいて状態「1」を取るセルが右に移動した。
+      * 初期密度が0.5である図のうち、図2、図11については状態「1」を取るセルが右に移動した。また、図5、図8、図14では状態「1」を取るセルが概ね左に移動したのち、各セルが状態「0」と「1」を交互に繰り返した。
+      * 初期密度が0.7である、図3、図6、図9、図12、図15のすべてにおいて状態「1」を取るセルが左に移動した。
+    }
+  >
+  +chapter {考察} <
+    +p {
+      本実験ではセルオートマトンは184番規則に従う。
+      注目するセル${cell_i}についてその周囲の${ cell_{i-1}, cell_i, cell_{i+1} }のビット列について考える。
+    }
+    +p {
+      初期密度が0.3のとき、${cell_i}周囲のビット列は${0, 0, 0}を取る確率が${ \paren{\frac{7}{10}}^3 }で最も高い。
+      この場合、${cell_i}は「0」に遷移する。
+      次に、${0, 0, 1}、${0, 1, 0}、${1, 0, 0}を取る確率が${ \paren{\frac{7}{10}}^2\paren{\frac{3}{10}} }で二番目に高い。
+      ${0, 0, 1}の場合、${cell_i}は「0」に遷移する。
+      同様に、${0, 1, 0}の場合は「0」に、${1, 0, 0}は「１」に遷移する。
+      また、${0, 1, 0}の場合は${ cell_{i+1} }の周囲のビット列が${1, 0, 0}か${1, 0, 1}であり、どちらも「1」に遷移する。
+      したがって、${cell_i}周囲のビット列が${0, 0, 1}、${0, 1, 0}、${1, 0, 0}を取るとき、状態「1」はより右に移動する。
+      ${0, 0, 0}、${0, 0, 1}、${0, 1, 0}、${1, 0, 0}を取る場合は全体の78.4\%であり、「初期密度が0.3の場合、時間経過によりセルが右に移動する」という事象は高い確率で発生し得る。
+    }
+    +p {
+      初期密度が0.5のとき、${cell_i}周囲のビット列はすべてのビットの組み合わせが同じ確率で出現する。
+      ビット列が${..., 0, 1, 0, 1, 0, ...}のように状態「0」と「1」を繰り返す時について考える。
+      ビット列${0, 1, 0}は「0」に遷移し、${1, 0, 1}は「1」に遷移する。
+      したがって、一度でも交互に繰り返すビット列に遷移すると同じ変化を繰り返し続ける。
+    }
+    +p {
+      初期状態が0.7のとき、${cell_i}周囲のビット列は${1, 1, 1}を取る確率が${ \paren{\frac{7}{10}}^3 }で最も高い。
+      この場合、${cell_i}は「1」に遷移する。
+      次に、${0, 1, 1}、${1, 0, 1}、${1, 1, 0}を取る確率が${ \paren{\frac{7}{10}}^2\paren{\frac{3}{10}} }で二番目に高い。
+      ${0, 1, 1}の場合、${cell_i}は「1」に遷移する。
+      同様に、${1, 0, 1}の場合は「1」、${1, 1, 0}の場合は「0」に遷移する。
+    }
+    +p {
+      ${0, 1, 1}の場合は、${ cell_{i+1} }の周囲のビット列が${1, 1, 0}か${1, 1, 1}であり、前者は「0」に、後者は「1」に遷移する。
+      ${ cell_{i-1} }の周囲のビット列は${0, 0, 1}か${1, 0, 1}であり、前者は「0」に、後者は「1」に遷移する。
+      この場合は周囲のセルの変化はランダムであり、移動についての傾向は読み取れない。
+    }
+    +p {
+      ${1, 0, 1}の場合は、${ cell_{i-1} }の周囲のビット列が${0, 1, 0}か${1, 1, 0}であり、どちらも「0」に遷移する。
+      ${ cell_{i+1} }の周囲のビット列は${0, 1, 0}か${0, 1, 1}であり、前者は「0」に、後者は「1」に遷移する。
+      ${ cell_{i+1} }の状態が「1」のビット列のうち、${0, 0, 1}以外の3パターンはすべて「1」に遷移する。
+      よって${ cell_{i-1} }の状態が「1」であることと、初期密度が0.7であることから、${ cell_{i-2} }は「1」に遷移する確率が高い。
+      したがって、この場合において時間経過によりセルが左に移動する事象は高い確率で発生し得る。
+    }
+    +p {
+      ${1, 1, 0}の場合は${ cell_{i+1} }の周囲のビット列が${1, 0, 0}か${1, 0, 1}であり、どちらも「1」に遷移する。
+      ${ cell_{i-1} }の周囲のビット列は${0, 1, 1}か${1, 1, 1}であり、どちらも「1」に遷移する。
+      つまり、時間${t}における${1, 1, 0}は、時間${t+1}で${1, 0, 1}に遷移する。
+      また、${1, 0, 1}と同様の理由で${ cell_{i-2} }は「1」に遷移する確率が高い。
+      したがって、この場合において時間経過によりセルが左に移動する事象は高い確率で発生し得る。
+    }
+    +p {
+      ${1, 1, 1}、${1, 0, 1}、${1, 1, 0}を取る場合は全体の63.7\%であり、「初期密度が0.7の場合、時間経過によりセルが左に移動する」という事象は高い確率で発生し得る。
+    }
+  >
+  +chapter {プログラムリスト} <
+    +p {
+      以下にプログラムを示す。
+      `main.c`が起点のプログラムファイルであり、`cell_automaton.c`に定義されている関数を呼び出すことでセルオートマトンを実装した。
+    }
+    +section {main.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include "cell_automaton.h"
+
+#define EXIT_IF_HAS_ERROR(x) if (x) { return 1; }
+
+int suite (int seed) {
+    srand(seed);
+    int percents[3] = { 30, 50, 70 };
+    for (int i = 0; i < 3; i++) {
+        int state[ARR_SIZE];
+        fill_density_array(state, (float)percents[i] / 100);
+        char path[27];
+        sprintf(path, "out/%d-percent-seed-%d.ppm", percents[i], seed);
+        EXIT_IF_HAS_ERROR(run_and_output_state_to_ppm(path, state, 25))
+    }
+    return 0;
+}
+
+int main () {
+    int seeds[5] = { 149, 193, 251, 383, 457 };
+    for (int i = 0; i < 5; i++) {
+        EXIT_IF_HAS_ERROR(suite(seeds[i]))
+    }
+    return 0;
+}`);
+    >
+    +section {cell_automaton.h} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include "cell_automaton.h"
+
+float rand_float (float max) {
+  return max * rand() / (RAND_MAX+1.0);
+}
+
+void fill_density_array (int arr[ARR_SIZE], float density) {
+  for (int i = 0; i < ARR_SIZE; i++) {
+    arr[i] = (rand_float(1.0) < density);
+  }
+}
+
+void print_array (int trial, int arr[ARR_SIZE]) {
+  printf("trial%d: ", trial);
+  for (int i = 0; i < ARR_SIZE; i++) {
+    printf("%d ", arr[i]);
+    if (i == (ARR_SIZE-1)) printf("\n");
+  }
+}
+
+void cell_automaton_184 (int state[ARR_SIZE]) {
+  int result[20];
+  memcpy(result, state, sizeof(state));
+  for (int i = 0; i < ARR_SIZE; i++) {
+    int indexes[] = { i-1, i, i+1 };
+    if (i == 0) {
+      indexes[0] = ARR_SIZE-1;
+    } else if (i == (ARR_SIZE-1)) {
+      indexes[2] = 0;
+    }
+    int bit = state[indexes[0]]*4 + state[indexes[1]]*2 + state[indexes[2]];
+    switch (bit) {
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      result[indexes[1]] = 1;
+      break;
+    default:
+      result[indexes[1]] = 0;
+    }
+  }
+  memcpy(state, result, sizeof(result));
+}
+
+int run_and_output_state_to_ppm (char *dest, int state[ARR_SIZE], int magnification) {
+  FILE *ppm_file = fopen(dest, "w");
+  if (ppm_file == NULL) {
+    fprintf(stderr, "failed to open %s.\n", dest);
+    return 1;
+  }
+  fprintf(ppm_file, "P3\n%d %d\n255\n", 20*magnification, 21*magnification);
+  for (int trial = 0; trial <= TRIAL; trial++) {
+    if (trial != 0) {
+      cell_automaton_184(state);
+    }
+    for (int y = 0; y < magnification; y++) {
+      for (int i = 0; i < 20; i++) {
+          int color = 0;
+          if (state[i] == 0) {
+              color = 255;
+          }
+          for (int x = 0; x < magnification; x++) {
+            fprintf(ppm_file, "%d %d %d ", color, color, color);
+          }
+      }
+      fprintf(ppm_file, "\n");
+    }
+  }
+  fclose(ppm_file);
+  return 0;
+}`);
+    >
+    +section {cell_automaton.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#ifndef CELL_AUTOMATON_H
+#define CELL_AUTOMATON_H
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define RAND_SEED 193
+#define ARR_SIZE 20
+#define TRIAL 20
+
+float rand_float (float max);
+void cell_automaton_184 (int state[ARR_SIZE]);
+void fill_density_array (int arr[ARR_SIZE], float density);
+int run_and_output_state_to_ppm (char *dest, int state[ARR_SIZE], int magnification);
+
+#endif`);
+    >
+  >
+>

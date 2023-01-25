@@ -2,15 +2,23 @@
 
 #define EXIT_IF_HAS_ERROR(x) if (x) { return 1; }
 
+int suite (int seed) {
+    srand(seed);
+    int percents[3] = { 30, 50, 70 };
+    for (int i = 0; i < 3; i++) {
+        int state[ARR_SIZE];
+        fill_density_array(state, (float)percents[i] / 100);
+        char path[27];
+        sprintf(path, "out/%d-percent-seed-%d.ppm", percents[i], seed);
+        EXIT_IF_HAS_ERROR(run_and_output_state_to_ppm(path, state, 25))
+    }
+    return 0;
+}
+
 int main () {
-    srand(RAND_SEED);
-    int state_30_percent[ARR_SIZE];
-    int state_50_percent[ARR_SIZE];
-    int state_70_percent[ARR_SIZE];
-    fill_density_array(state_30_percent, 30);
-    fill_density_array(state_50_percent, 50);
-    fill_density_array(state_70_percent, 70);
-    EXIT_IF_HAS_ERROR(run_and_output_state_to_ppm("out/30-percent.ppm", state_30_percent))
-    EXIT_IF_HAS_ERROR(run_and_output_state_to_ppm("out/50-percent.ppm", state_50_percent))
-    EXIT_IF_HAS_ERROR(run_and_output_state_to_ppm("out/70-percent.ppm", state_70_percent))
+    int seeds[5] = { 149, 193, 251, 383, 457 };
+    for (int i = 0; i < 5; i++) {
+        EXIT_IF_HAS_ERROR(suite(seeds[i]))
+    }
+    return 0;
 }

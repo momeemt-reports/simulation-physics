@@ -3,6 +3,7 @@
 *.out
 data.dat
 graph.jpg
+/out
 
 # 授業資料
 /documents

@@ -1,0 +1,9 @@
+{
+    "name": "simulation-physics",
+    "image": "coinsshinkan23/pamphlet-docker:main",
+    "postCreateCommand": "./.devcontainer/postCreateCommand.sh",
+    "extensions": [
+        "wraikny.wraikny-satysfi-extension",
+        "ngtystr.ppm-pgm-viewer-for-vscode"
+    ]
+}

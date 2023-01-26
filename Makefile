@@ -15,10 +15,10 @@ report2: report/week2/main.saty
 	pdfunite ./report/week2/hyoshi.pdf ./report/week2/main.pdf week2.pdf
 
 main.out: $(OBJECTS)
-	mkdir -p obj out
 	gcc $^ -o $@ -lm
 
 obj/%.o: src/%.c
+	mkdir -p obj out
 	gcc -c $^ -o $@
 
 .PHONY: clean

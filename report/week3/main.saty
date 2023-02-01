@@ -1,0 +1,290 @@
+@require: stdjareport
+@require: itemize
+@require: enumitem/enumitem
+@require: easytable/easytable
+@require: code-printer/code-printer
+@require: code-printer/code-syntax
+@require: code-printer/code-theme
+
+open EnumitemAlias
+open EasyTableAlias
+in
+document(|
+  title = {シミュレーション物理 レポート 演習課題(3)};
+  author = {浅田睦葉};
+|) '<
+  +chapter {実験の目的} <
+    +p {
+      本実験の目的は、次の
+      偏微分方程式をガウス・ザイデル法で解き、格子点${(1, 1), (2, 1), (1, 2), (2, 2)}の値を求めることである。
+    }
+    +math (${
+      \frac{\delta^2f}{\delta x^2} +
+      \frac{\delta^2f}{\delta y^2} = 6x - 3y
+    });
+    +p {
+      計算の際には、以下の条件を満たすものとする。
+    }
+    +enumerate {
+      * ${\Delta x = \Delta y = 1}
+      * ${f(1, 3) = 22.5}
+      * ${f(2, 3) = 36}
+      * ${f(3, 1) = 4.5}
+      * ${f(3, 2) = 9}
+      * ${f(x, 0) = f(0, y) = 0}
+    }
+  >
+  +chapter {実験方法} <
+    +p {
+      実験には、Macbook Pro（チップ: Apple M1 Max）を使用した。
+      Dockerを利用して、Ubuntu 22.04.1 LTS 環境を立て、その上でC言語でプログラムを作成して実行した。
+      コンパイルにはgcc 11.2.0を用いた。このコンパイラはUbuntu 11.2.0-19ubuntu1をターゲットにしている。
+      プログラムの実装にはVisual Studio Code バージョン: 1.74.3を用いた。
+    }
+    +p {
+      実験では、大きさ${4 \times 4}の配列を受け取って線形反復法とガウス・ザイデル法を計算する関数をそれぞれ定義した。
+      次に`calc_approx`関数に配列と`ApproxMethod`型で定義された計算方式を渡して、計算結果を配列に格納した。
+      `assert_approx`関数が`calc_approx`関数を呼び出し、解析値と比較して誤差が`DBL_EPSILON`より大きければ異常値を返した。
+    }
+    +p {
+      計算する偏微分方程式はポアソン方程式であるため、線形反復法、及びガウス・ザイデル法を用いて解を導出できる。
+      線形反復法の反復計算のステップ数が${n}のとき、式は次のように表される。
+    }
+    +math(${
+      f^{n+1}_{i,j} = \frac{1}{4} (f^n_{i+1, j} + f^n_{i-1, j} + f^n_{i, j+1} + f^n_{i, j-1} ) + \frac{\Delta x^2}{4}g_{i, j}
+    });
+    +p {
+      ここで、条件（1）から式は次のように変形できる。
+    }
+    +math(${
+      f^{n+1}_{i,j} = \frac{f^n_{i+1, j} + f^n_{i-1, j} + f^n_{i, j+1} + f^n_{i, j-1} + g_{i, j}}{4}
+    });
+    +p {
+      また、ガウス・ザイデル法の反復計算のステップ数が${n}のとき、条件（1）から変形して式は次のように表される。
+    }
+    +math(${
+      f^{n+1}_{i,j} = \frac{f^n_{i+1, j} + f^{n+1}_{i-1, j} + f^n_{i, j+1} + f^{n+1}_{i, j-1} + g_{i, j}}{4}
+    });
+    +p {
+      どちらも、次の条件式を満たすまで反復計算を行う。
+    }
+    +math(${
+      \abs{1 - \frac{f^n_{i, j}}{f^{n+1}_{i,j}}} \leq \epsilon \ll 1
+    });
+  >
+  +chapter {実験結果} <
+    +p {
+      格子点${(1, 1), (2, 1), (1, 2), (2, 2)}の値と、反復回数を示す。
+    }
+    +easytable [c;c;c;c;c;c] {
+    | 計算法 | ${f(1, 1)} | ${f(2, 1)} | ${f(1, 2)} | ${f(2, 2)} | 反復回数
+    | 線形反復法 | 1.500 | -0.000 | 9.000 | 12.000 | 53
+    | ガウス・ザイデル法 | 1.500 | 0.000 | 9.000 | 12.000 | 28
+    | 解析解 | 1.5 | 0.0 | 9.0 | 12.0 | 
+    |}
+    +p {
+      この結果から、次のことがわかる。
+    }
+    +enumerate {
+      * 線形反復法、およびガウス・ザイデル法によって解析解に十分近い値が求められた
+      * ガウス・ザイデル法は線形反復法と比べて約${1.89285714}倍早く収束した
+    }
+  >
+  +chapter {考察} <
+    +p {
+      問題に与えられた次の偏微分方程式、${\frac{\delta^2f}{\delta x^2} + \frac{\delta^2f}{\delta y^2} = 6x - 3y}を差分近似すると次の式になる。
+      ここで、${g(x, y) = -6x + 3y}と置く。
+    }
+    +math(${
+      \frac{f_{i+1, j} - 2f_{i, j} + f_{i-1, j}}{\Delta x^2} + 
+      \frac{f_{i, j+1} - 2f_{i, j} + f_{i, j-1}}{\Delta y^2} = -g_{i, j}
+    });
+    +p {
+      ここから、以下のように変形できる。
+    }
+    +math(${
+      f^{n+1}_{i,j} = \frac{1}{4} (f^n_{i+1, j} + f^n_{i-1, j} + f^n_{i, j+1} + f^n_{i, j-1} ) + \frac{\Delta x^2}{4}g_{i, j}
+    });
+    +p {
+      これは大規模な、具体的には${n\times n-}行列であり、連立一次方程式として解くことができる。
+      連立方程式を${Ax = b}と置く。${A}は${n\times n}行列で、${x}と${b}は${n}次元のベクトルである。
+      対角行列${D}、下三角行列${L}、上三角行列${U}があるとき、行列${A}は次のように分解できる。
+    }
+    +math(${
+      A = D + L + U
+    });
+    +p {
+      ここから、元の式を変形し、さらに${x}について反復回数を加えるとガウス・ザイデル法の反復式が得られる。
+    }
+    +math(${
+      x^{n+1} = -(D+L)^{-1}Ux^{n}+(D+L)^{-1}b
+    });
+    +p {
+      ${x}が${x'}に収束するとき、次の式が成立する。
+    }
+    +math(${
+      x' = -(D+L)^{-1}Ux'+(D+L)^{-1}b
+    });
+    +p {
+      式を変形すると${Ax' = b}が得られるから、${x = x'}である。
+      したがって、ガウス・ザイデル法を用いれば偏微分方程式を差分近似した式から近似解を得ることができる。
+    }
+  >
+  +chapter {プログラムリスト} <
+    +p {
+      以下にプログラムを示す。
+      `main.c`が起点のプログラムファイルであり、`gauss_seidel.c`に定義されている関数を呼び出すことで線形反復法、およびガウス・ザイデル法を実装した。
+    }
+    +section {main.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include <stdio.h>
+#include "gauss_seidel.h"
+
+#define EXIT_IF_HAS_ERROR(x) if (x) { return 1; }
+
+int main () {
+    assert_approx(Iterative);
+    assert_approx(GaussSeidel);
+    return 0;
+}
+`);
+    >
+    +section {gauss_seidel.h} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#ifndef GAUSS_SEIDEL_H
+#define GAUSS_SEIDEL_H
+
+#include <math.h>
+#include <float.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
+typedef enum {
+  Iterative,
+  GaussSeidel
+} ApproxMethod;
+
+void print_grid (double grid[4][4]);
+
+// 線形反復法
+void iterative (double src[4][4], double dest[4][4]);
+
+// ガウス・ザイデル法
+void gauss_seidel (double src[4][4], double dest[4][4]);
+
+// 近似の計算
+void calc_approx (double result[4][4], ApproxMethod method);
+
+// 近似計算値が解析解と等しいか
+int assert_approx (ApproxMethod method);
+
+#endif`);
+    >
+    +section {gauss_seidel.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include "gauss_seidel.h"
+
+double g (int x, int y) {
+  return -6.0 * (double)x + 3.0 * (double)y;
+}
+
+double analytic_f (int x, int y) {
+  return 3.0 * x * y * y - 1.5 * x * x * y;
+}
+
+void print_grid (double grid[4][4]) {
+  printf("-------------------------------------------\n");
+  for (int y = 0; y < 4; y++) {
+      for (int x = 0; x < 4; x++) {
+          printf("%4f ", grid[y][x]);
+      }
+      printf("\n");
+  }
+}
+
+void copy_grid (double src[4][4], double dest[4][4]) {
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      dest[y][x] = src[y][x];
+    }
+  }
+}
+
+bool is_converged (double n[4][4], double n_1[4][4]) {
+  bool result = true;
+  for (int y = 2; y <= 2; y++) {
+    for (int x = 1; x <= 2; x++) {
+      result &= fabs(1.0 - n[y][x] / n_1[y][x]) <= DBL_EPSILON;
+    }
+  }
+  return result;
+}
+
+void iterative (double src[4][4], double dest[4][4]) {
+  for (int y = 1; y <= 2; y++) {
+    for (int x = 1; x <= 2; x++) {
+      dest[y][x] = (src[y][x+1] + src[y][x-1] + src[y+1][x] + src[y-1][x] + g(x, y)) / 4.0;
+    }
+  }
+}
+
+void gauss_seidel (double src[4][4], double dest[4][4]) {
+  for (int y = 1; y <= 2; y++) {
+    for (int x = 1; x <= 2; x++) {
+      dest[y][x] = (src[y][x+1] + dest[y][x-1] + src[y+1][x] + dest[y-1][x] + g(x, y)) / 4.0;
+    }
+  }
+}
+
+void calc_approx (double result[4][4], ApproxMethod method) {
+  double grid[4][4] = {
+    {0.0,  0.0,  0.0,  0.0},
+    {0.0,  0.0,  0.0, -4.5},
+    {0.0,  0.0,  0.0,  9.0},
+    {0.0, 22.5, 36.0,  0.0}
+  };
+  int trial = 0;
+  while (true) {
+    trial++;
+    double applied_grid[4][4] = {0};
+    copy_grid(grid, applied_grid);
+    if (method == Iterative) {
+      iterative(grid, applied_grid);
+    } else {
+      gauss_seidel(grid, applied_grid);
+    }
+    if (is_converged(grid, applied_grid)) {
+      copy_grid(applied_grid, grid);
+      break;
+    }
+    copy_grid(applied_grid, grid);
+  }
+  if (method == Iterative) {
+    printf("反復回数（線形反復法）: %d\n", trial);
+  } else {
+    printf("反復回数（ガウス・ザイデル法）: %d\n", trial);
+  }
+  copy_grid(grid, result);
+}
+
+int assert_approx (ApproxMethod method) {
+  double result[4][4] = {};
+  calc_approx(result, method);
+  int assert = 0;
+  for (int y = 1; y <= 2; y++) {
+    for (int x = 1; x <= 2; x++) {
+      printf("f(%d, %d) = %.40f\n", x, y, result[y][x]);
+      if (fabs(result[y][x] - analytic_f(x, y)) > DBL_EPSILON) {
+        assert = 1;
+      }
+    }
+  }
+  return assert;
+}`);
+    > 
+  >
+>

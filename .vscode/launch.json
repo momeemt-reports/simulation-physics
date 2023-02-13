@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "name": "c_debug",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.out",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "c_build"
+    }
+  ],
+  "version": "2.0.0"
+}

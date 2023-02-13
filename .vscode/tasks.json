@@ -1,0 +1,29 @@
+{
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "c_build",
+      "command": "gcc",
+      "args": [
+        "obj/cell_automaton.o",
+        "obj/gauss_seidel.o",
+        "obj/hit_miss.o",
+        "obj/main.o",
+        "obj/particle_mesh.o",
+        "obj/vectors.o",
+        "-g",
+        "-o",
+        "main.out",
+        "-lm"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build",
+    }
+  ],
+  "version": "2.0.0"
+}

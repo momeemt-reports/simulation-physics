@@ -15,8 +15,8 @@ vector_t multiply (vector_t *v1, double scalar) {
 }
 
 vector_t subtract (vector_t *v1, vector_t *v2) {
-    vector_t minus_v1 = multiply(&v1, -1);
-    return add(&minus_v1, &v2);
+    vector_t minus_v1 = multiply(v1, -1);
+    return add(&minus_v1, v2);
 }
 
 double rand_double (double start, double end) {

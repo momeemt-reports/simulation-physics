@@ -1,25 +1,10 @@
 #include "hit_miss.h"
 
-double rand_double () {
-    return (2.0 * rand()) / (RAND_MAX + 1.0) - 1.0;
-}
-
-point_t rand_point () {
-    point_t point;
-    point.x = rand_double();
-    point.y = rand_double();
-    return point;
-}
-
-bool is_in_unit_circle (point_t *point) {
-    return pow(point->x, 2) + pow(point->y, 2) <= 1;
-}
-
-void generate_rand_points_in_circle (point_t *points) {
+void generate_rand_points_in_circle (vector_t *points) {
     int generated_count = 0;
     while (generated_count < GENERATE_POINTS_COUNT) {
-        point_t point = rand_point();
-        if (is_in_unit_circle(&point)) {
+        vector_t point = rand_vector(-1, 1);
+        if (is_in_circle(&point, 1)) {
             points[generated_count] = point;
             generated_count++;
         }
@@ -27,7 +12,7 @@ void generate_rand_points_in_circle (point_t *points) {
 }
 
 int make_circle_graph () {
-    point_t points[GENERATE_POINTS_COUNT];
+    vector_t points[GENERATE_POINTS_COUNT];
     srand(RAND_SEED);
     generate_rand_points_in_circle(points);
     
@@ -60,7 +45,7 @@ int hit_and_miss (int count) {
     for (int i = 0; i < TRIAL; i++) {
         int hit = 0;
         for (int j = 0; j < count; j++) {
-            point_t point = rand_point();
+            vector_t point = rand_vector(-1, 1);
             if (pow(point.x, 2) + pow(point.y, 2) <= 1.0) {
                 hit++;
             }

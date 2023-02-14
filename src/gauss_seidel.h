@@ -29,6 +29,9 @@ void free_grid (double **grid, int y_len);
 // グリッドを全て0で埋める
 void reset_grid (double **grid, int y_len, int x_len);
 
+// グリッドの近似が終わっているかを判定する
+bool is_converged (double **arr1, double **arr2, int y_len, int x_len);
+
 // 線形反復法
 void iterative (double **src, double **dest, int y_len, int x_len, double delta_x, double(*fn)(int x, int y));
 

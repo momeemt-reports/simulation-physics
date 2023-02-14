@@ -7,13 +7,13 @@
 #include "vectors.h"
 #include "gauss_seidel.h"
 
-#define NUMBER_OF_ASTRONOMICAL_BODY 500                 // N
-#define CONSTANT_OF_GRAVITATION 1                       // G
-#define MASS 1                                          // m
-#define HUBBLE_CONSTANT 3.5                             // H
-#define ITERATIVE_UPPER_BOUND_OF_GAUSS_ZAIDEL_METHOD 50 // ni
-#define DT 0.1                                          // dt
-#define PARTICLE_MESH_TRIAL 30                          // nt
+#define NUMBER_OF_ASTRONOMICAL_BODY 500                  // N
+#define CONSTANT_OF_GRAVITATION 1                        // G
+#define MASS 1                                           // m
+#define HUBBLE_CONSTANT 3.5                              // H
+#define ITERATIVE_UPPER_BOUND_OF_GAUSS_ZAIDEL_METHOD 50  // ni
+#define DT 0.1                                           // dt
+#define PARTICLE_MESH_TRIAL 30                           // nt
 #define UPDATE_AREA 101
 
 typedef struct {

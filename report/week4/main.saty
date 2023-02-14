@@ -1,0 +1,643 @@
+@require: stdjareport
+@require: itemize
+@require: image/image
+@require: enumitem/enumitem
+@require: easytable/easytable
+@require: code-printer/code-printer
+@require: code-printer/code-syntax
+@require: code-printer/code-theme
+
+open EnumitemAlias
+open EasyTableAlias
+let-block ctx +center it =
+  line-break true true ctx (inline-fil ++ read-inline ctx it ++ inline-fil)
+in
+document(|
+  title = {シミュレーション物理 レポート 演習課題(4)};
+  author = {浅田睦葉};
+|) '<
+  +chapter {実験の目的} <
+    +p {
+      本実験の目的は、引力を考慮した宇宙の膨張をシミュレーションするプログラムを実行し、天体の分布図を作成することである。
+      初期分布、${nt = 10}、${nt = 20}、${nt = 30}における分布図を作成する。
+    }
+  >
+  +chapter {実験方法} <
+    +p {
+      実験には、Macbook Pro（チップ: Apple M1 Max）を使用した。
+      Dockerを利用して、Ubuntu 22.04.1 LTS 環境を立て、その上でC言語でプログラムを作成して実行した。
+      コンパイルにはgcc 11.2.0を用いた。このコンパイラはUbuntu 11.2.0-19ubuntu1をターゲットにしている。
+      分布図の描画にはgnuplot 5.4 patchlevel 2を用いた。
+      プログラムの実装にはVisual Studio Code バージョン: 1.74.3を用いた。
+    }
+    +p {
+      実験では、まず最初にシードを3桁の素数である${193}に設定した。
+      次に、位置と速度を持ち天体を表す構造体型である`astronomical_body_t`を初期化した。
+      初期化では、原点を中心とした${x^2 + y^2 \geq 5^2}の円内に初期座標を設定し、定数`HUBBLE_CONSTANT`を掛けて初速度を設定した。
+      その後、全天体の位置を平行移動して第1象限に移動させ、ポテンシャルの初期値と境界条件を設定した。
+    }
+    +p {
+      以下の処理を時間ステップ数（${nt = 30}）だけ計算し、初期分布、${nt = 10}、${nt = 20}、${nt = 30}における天体の座標をファイルに出力した。
+    }
+    +listing {
+      * 質量密度をNGP法（`nearest_grid_point`）で計算する
+      * ポテンシャルをガウス・ザイデル法（`gauss_seidel`）で計算する
+      * 重力場を計算し、天体の新しい座標・速度を計算する
+    }
+    +p {
+      最後に、出力したデータを元にgnuplotで散布図を作成し、JPEG形式の画像として出力した。
+    }
+  >
+  +chapter {実験結果} <
+    +p {
+      初期分布、${nt = 10}、${nt = 20}、${nt = 30}における分布図を示す。
+    }
+    +center {
+      \include-image?:(300pt)(`../../out/astronomical-nt0.jpg`);
+    }
+    +center {
+      図1. 初期分布
+    }
+    +center {
+      \include-image?:(300pt)(`../../out/astronomical-nt10.jpg`);
+    }
+    +center {
+      図2. ${nt = 10}における分布
+    }
+    +center {
+      \include-image?:(300pt)(`../../out/astronomical-nt20.jpg`);
+    }
+    +center {
+      図3. ${nt = 20}における分布
+    }
+    +center {
+      \include-image?:(300pt)(`../../out/astronomical-nt30.jpg`);
+    }
+    +center {
+      図4. ${nt = 30}における分布
+    }
+    +p {
+      図1〜4は、それぞれの時間ステップにおける天体の分布図である。
+      図から、次のことがわかる。
+    }
+    +enumerate {
+      * 中心から遠い天体の方がよりはやい速度で移動している
+      * 時間ステップが経過するごとに、近くにいた天体同士がよりまとまって膨張している
+    }
+  >
+  +chapter {考察} <
+    +listing {
+      * 天体を初期化したとき、初速度${v_x}を${v_x[i] = H \times x_0[i]}と設定したため、
+      原点との距離が大きい天体の方が初速度が大きく、中心から遠い天体の方がよりはやい速度で移動する結果となったと考えられる。
+      ${v_y}についても同様である。
+      * 天体の新しい速度${v_x[i]}は、${v_x[i] += \frac{Fp_x}{m} \times dt}という式で更新される。
+      ${Fp_x}は最近接格子点の重力場${F_x}から計算される。
+      したがって、周囲の天体が多いほどその中心に向かっての速度が大きくなるので、
+      時間ステップが経過するごとに、近くにいた天体同士がよりまとまって膨張していると言える。
+      ${v_y}についても同様である。
+    }
+  >
+  +chapter {プログラムリスト} <
+    +p {
+      以下にプログラムを示す。
+      `main.c`が起点のプログラムファイルである。
+      `particle_mesh.c`は天体とその初期化、NGP法を定義したプログラムファイルである。
+      `gauss_seidel.c`はガウス・ザイデル法を定義したプログラムファイルである。
+      第3回の演習課題で実装したガウス・ザイデル法から、任意の二次元配列をダブルポインタとして受け取るように拡張している。
+    }
+    +section {main.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include <stdio.h>
+#include "particle_mesh.h"
+#include "plots.h"
+
+#define EXIT_IF_HAS_ERROR(x) if (x) { return 1; }
+
+double **mass_density_map;
+
+double rho (int x, int y) {
+    return -mass_density_map[y][x];
+}
+
+int main () {
+    srand(193);
+    astronomical_body_t ab_arr[NUMBER_OF_ASTRONOMICAL_BODY];
+    initialize_astronomical_bodies(ab_arr);
+
+    FILE *f_nt0 = fopen("out/astronomical-nt0.dat", "w");
+    if (f_nt0 == NULL) {
+        fprintf(stderr, "failed to open out/astronomical-nt0.dat.");
+        return 1;
+    }
+    for (int i = 0; i < NUMBER_OF_ASTRONOMICAL_BODY; i++) {
+        fprintf(f_nt0, "%f %f\n", ab_arr[i].position.x, ab_arr[i].position.y);
+    }
+    fclose(f_nt0);
+
+    mass_density_map = initialize_grid(UPDATE_AREA, UPDATE_AREA);
+
+    double **potential = initialize_grid(UPDATE_AREA, UPDATE_AREA);
+    double **init_grid = initialize_grid(UPDATE_AREA, UPDATE_AREA);
+    double **gravitational_field_x = initialize_grid(UPDATE_AREA, UPDATE_AREA);
+    double **gravitational_field_y = initialize_grid(UPDATE_AREA, UPDATE_AREA);
+
+    FILE *data_file = fopen("out/astronomical.dat", "w");
+    if (data_file == NULL) {
+        fprintf(stderr, "failed to open out/astronomical.dat.");
+        return 1;
+    }
+    FILE *f_nt10 = fopen("out/astronomical-nt10.dat", "w");
+    if (f_nt10 == NULL) {
+        fprintf(stderr, "failed to open out/astronomical-nt10.dat.");
+        return 1;
+    }
+    FILE *f_nt20 = fopen("out/astronomical-nt20.dat", "w");
+    if (f_nt20 == NULL) {
+        fprintf(stderr, "failed to open out/astronomical-nt20.dat.");
+        return 1;
+    }
+    FILE *f_nt30 = fopen("out/astronomical-nt30.dat", "w");
+    if (f_nt30 == NULL) {
+        fprintf(stderr, "failed to open out/astronomical-nt30.dat.");
+        return 1;
+    }      
+
+    for (int nt = 0; nt < PARTICLE_MESH_TRIAL; nt++) {
+        nearest_grid_point(ab_arr, mass_density_map, UPDATE_AREA, UPDATE_AREA);
+        reset_grid(potential, UPDATE_AREA, UPDATE_AREA);
+
+        int trial = 0;
+        while (true) {
+            trial++;
+            double **applied_grid = initialize_grid(UPDATE_AREA, UPDATE_AREA);
+            copy_grid(potential, applied_grid, UPDATE_AREA, UPDATE_AREA);
+            gauss_seidel(potential, applied_grid, UPDATE_AREA, UPDATE_AREA, 1.0, rho);
+            if (is_converged(potential, applied_grid, UPDATE_AREA, UPDATE_AREA) || trial > ITERATIVE_UPPER_BOUND_OF_GAUSS_ZAIDEL_METHOD) {
+                copy_grid(applied_grid, potential, UPDATE_AREA, UPDATE_AREA);
+                free_grid(applied_grid, UPDATE_AREA);
+                break;
+            }
+            copy_grid(applied_grid, potential, UPDATE_AREA, UPDATE_AREA);
+            free_grid(applied_grid, UPDATE_AREA);
+        }
+
+        reset_grid(gravitational_field_x, UPDATE_AREA, UPDATE_AREA);
+        reset_grid(gravitational_field_y, UPDATE_AREA, UPDATE_AREA);
+        for (int y = 0; y < (UPDATE_AREA-1); y++) {
+            for (int x = 0; x < (UPDATE_AREA-1); x++) {
+                gravitational_field_x[y][x] = -((potential[y][x+1] - potential[y][x]) / 1.0);
+                gravitational_field_y[y][x] = -((potential[y+1][x] - potential[y][x]) / 1.0);
+            }
+        }  
+
+        for (int i = 0; i < NUMBER_OF_ASTRONOMICAL_BODY; i++) {
+            int x = round(ab_arr[i].position.x);
+            int y = round(ab_arr[i].position.y);
+            if (0 < x && x < 100 && 0 < y && y < 100) {
+                vector_t fp = {
+                    MASS * gravitational_field_x[y][x],
+                    MASS * gravitational_field_y[y][x]
+                };
+                ab_arr[i].velocity.x += (fp.x / MASS) * DT;
+                ab_arr[i].velocity.y += (fp.y / MASS) * DT;
+                ab_arr[i].position.x += ab_arr[i].velocity.x * DT;
+                ab_arr[i].position.y += ab_arr[i].velocity.y * DT;
+            }
+            fprintf(data_file, "%f %f\n", ab_arr[i].position.x, ab_arr[i].position.y);
+
+            if (nt == 9) {
+                fprintf(f_nt10, "%f %f\n", ab_arr[i].position.x, ab_arr[i].position.y);
+            } else if (nt == 19) {
+                fprintf(f_nt20, "%f %f\n", ab_arr[i].position.x, ab_arr[i].position.y);
+            } else if (nt == 29) {
+                fprintf(f_nt30, "%f %f\n", ab_arr[i].position.x, ab_arr[i].position.y);
+            }
+        }
+    }
+    fclose(data_file);
+    fclose(f_nt10);
+    fclose(f_nt20);
+    fclose(f_nt30);
+
+    free_grid(potential, UPDATE_AREA);
+    free_grid(gravitational_field_x, UPDATE_AREA);
+    free_grid(gravitational_field_y, UPDATE_AREA);
+    free_grid(mass_density_map, UPDATE_AREA);
+    
+    output_jpeg(
+        "astronomical-nt0",
+        "out/astronomical-nt0.dat",
+        0, 100, 0, 100
+    );
+    output_jpeg(
+        "astronomical-nt10",
+        "out/astronomical-nt10.dat",
+        0, 100, 0, 100
+    );
+    output_jpeg(
+        "astronomical-nt20",
+        "out/astronomical-nt20.dat",
+        0, 100, 0, 100
+    );
+    output_jpeg(
+        "astronomical-nt30",
+        "out/astronomical-nt30.dat",
+        0, 100, 0, 100
+    );
+
+    output_gif(
+        "astronomical",
+        "out/astronomical.dat",
+        ITERATIVE_UPPER_BOUND_OF_GAUSS_ZAIDEL_METHOD,
+        0, 100, 0, 100,
+        NUMBER_OF_ASTRONOMICAL_BODY
+    );
+    return 0;
+}
+`);
+    >
+    +section {particle_mesh.h} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#ifndef PARTICLE_MESH_H
+#define PARTICLE_MESH_H
+
+#include <math.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include "vectors.h"
+#include "gauss_seidel.h"
+
+#define NUMBER_OF_ASTRONOMICAL_BODY 500                  // N
+#define CONSTANT_OF_GRAVITATION 1                        // G
+#define MASS 1                                           // m
+#define HUBBLE_CONSTANT 3.5                              // H
+#define ITERATIVE_UPPER_BOUND_OF_GAUSS_ZAIDEL_METHOD 50  // ni
+#define DT 0.1                                           // dt
+#define PARTICLE_MESH_TRIAL 30                           // nt
+#define UPDATE_AREA 101
+
+typedef struct {
+    vector_t position;
+    vector_t velocity;
+} astronomical_body_t;
+
+void initialize_astronomical_bodies (astronomical_body_t astronomical_bodies[NUMBER_OF_ASTRONOMICAL_BODY]);
+void print_astronomical_body (astronomical_body_t *ab);
+
+void nearest_grid_point (
+    astronomical_body_t astronomical_bodies[NUMBER_OF_ASTRONOMICAL_BODY],
+    double **mass_density_map,
+    int y_len, int x_len
+);
+void print_mass_density_map (double **mass_density_map, int y_len, int x_len);
+
+#endif`);
+    >
+    +section {particle_mesh.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include "particle_mesh.h"
+
+void point_of_astronomical_body (vector_t *position) {
+    while (1) {
+        vector_t v = rand_vector(-5, 5);
+        if (is_in_circle(&v, 5)) {
+            *position = v;
+            return;
+        }
+    }
+}
+
+vector_t velocity_of_astronomical_body (vector_t *position) {
+    return multiply(position, HUBBLE_CONSTANT);
+}
+
+void initialize_astronomical_body (astronomical_body_t *ab) {
+    point_of_astronomical_body(&ab->position);
+    ab->velocity = velocity_of_astronomical_body(&ab->position);
+    ab->position.x += 50.0;
+    ab->position.y += 50.0;
+}
+
+void initialize_astronomical_bodies (astronomical_body_t astronomical_bodies[NUMBER_OF_ASTRONOMICAL_BODY]) {
+    for (int i = 0; i < NUMBER_OF_ASTRONOMICAL_BODY; i++) {
+        initialize_astronomical_body(&astronomical_bodies[i]);
+    }
+}
+
+void print_astronomical_body (astronomical_body_t *ab) {
+    printf("天体 座標: (%f, %f) 速度: (%f, %f)\n", ab->position.x, ab->position.y, ab->velocity.x, ab->velocity.y);
+}
+
+void increase (astronomical_body_t astronomical_bodies[NUMBER_OF_ASTRONOMICAL_BODY]) {
+    for (int i = 0; i < NUMBER_OF_ASTRONOMICAL_BODY; i++) {
+        astronomical_bodies[i].position = add(&astronomical_bodies[i].position, &astronomical_bodies[i].velocity);
+    }
+}
+
+void nearest_grid_point (
+    astronomical_body_t astronomical_bodies[NUMBER_OF_ASTRONOMICAL_BODY],
+    double **mass_density_map,
+    int y_len, int x_len
+) {
+    double **result = initialize_grid(y_len, x_len);
+    for (int y = 0; y < y_len; y++) {
+        for (int x = 0; x < x_len; x++) {
+            mass_density_map[y][x] = 0.0;
+        }
+    }
+    for (int i = 0; i < NUMBER_OF_ASTRONOMICAL_BODY; i++) {
+        if (astronomical_bodies[i].position.x < 0.0 || astronomical_bodies[i].position.x > 100.0) continue;
+        if (astronomical_bodies[i].position.y < 0.0 || astronomical_bodies[i].position.y > 100.0) continue;
+        int x = round(astronomical_bodies[i].position.x);
+        int y = round(astronomical_bodies[i].position.y);
+        mass_density_map[y][x] += 1.0;
+    }
+    free_grid(result, y_len);
+}
+
+void print_mass_density_map (double **mass_density_map, int y_len, int x_len) {
+    for (int y = 0; y < y_len; y++) {
+        for (int x = 0; x < x_len; x++) {
+            printf("%2d ", (int)mass_density_map[y][x]);
+        }
+        printf("\n");
+    }
+}`);
+    >
+    +section {gauss_seidel.h} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#ifndef GAUSS_SEIDEL_H
+#define GAUSS_SEIDEL_H
+
+#include <math.h>
+#include <float.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+typedef enum {
+  Iterative,
+  GaussSeidel
+} ApproxMethod;
+
+
+// グリッドを出力する
+void print_grid (double **grid, int y_len, int x_len);
+
+// グリッドsrcをdestにコピーする
+void copy_grid (double **src, double **dest, int y_len, int x_len);
+
+// グリッドのメモリを確保して0で埋める
+double **initialize_grid (int y_len, int x_len);
+
+// グリッドのメモリを解放する
+void free_grid (double **grid, int y_len);
+
+// グリッドを全て0で埋める
+void reset_grid (double **grid, int y_len, int x_len);
+
+// グリッドの近似が終わっているかを判定する
+bool is_converged (double **arr1, double **arr2, int y_len, int x_len);
+
+// 線形反復法
+void iterative (double **src, double **dest, int y_len, int x_len, double delta_x, double(*fn)(int x, int y));
+
+// ガウス・ザイデル法
+void gauss_seidel (double **src, double **dest, int y_len, int x_len, double delta_x, double(*fn)(int x, int y));
+
+// 近似の計算
+void calc_approx (double **result, double **grid, int y_len, int x_len, ApproxMethod method);
+
+// 近似計算値が解析解と等しいか
+int assert_approx (ApproxMethod method);
+
+#endif`);
+    >
+    +section {gauss_seidel.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include "gauss_seidel.h"
+
+double g (int x, int y) {
+  return -6.0 * (double)x + 3.0 * (double)y;
+}
+
+double analytic_f (int x, int y) {
+  return 3.0 * x * y * y - 1.5 * x * x * y;
+}
+
+void print_grid (double **grid, int y_len, int x_len) {
+  printf("-------------------------------------------\n");
+  for (int y = 0; y < y_len; y++) {
+      for (int x = 0; x < x_len; x++) {
+          printf("%4f ", grid[y][x]);
+      }
+      printf("\n");
+  }
+}
+
+void copy_grid (double **src, double **dest, int y_len, int x_len) {
+  for (int y = 0; y < y_len; y++) {
+    for (int x = 0; x < x_len; x++) {
+      dest[y][x] = src[y][x];
+    }
+  }
+}
+
+double **initialize_grid (int y_len, int x_len) {
+  double **result = malloc(y_len * sizeof(double *));
+  for (int y = 0; y < y_len; y++) {
+    result[y] = malloc(x_len * sizeof(double *));
+    for (int x = 0; x < x_len; x++) {
+      result[y][x] = 0.0;
+    }
+  }
+  return result;
+}
+
+void reset_grid (double **grid, int y_len, int x_len) {
+  for (int y = 0; y < y_len; y++) {
+    for (int x = 0; x < x_len; x++) {
+      grid[y][x] = 0.0;
+    }
+  }
+}
+
+void free_grid (double **grid, int y_len) {
+  for (int y = 0; y < y_len; y++) {
+    free(grid[y]);
+  }
+  free(grid);
+}
+
+bool is_converged (double **arr1, double **arr2, int y_len, int x_len) {
+  bool result = true;
+  for (int y = 1; y < (y_len-1); y++) {
+    for (int x = 1; x < (x_len-1); x++) {
+      if (fabs(1.0 - arr1[y][x] / arr2[y][x]) > DBL_EPSILON) {
+        result = false;
+      }
+    }
+  }
+  return result;
+}
+
+void iterative (double **src, double **dest, int y_len, int x_len, double delta_x, double(*fn)(int x, int y)) {
+  for (int y = 1; y < (y_len-1); y++) {
+    for (int x = 1; x < (x_len-1); x++) {
+      dest[y][x] = (src[y][x+1] + src[y][x-1] + src[y+1][x] + src[y-1][x] + fn(x, y) * pow(delta_x, 2.0)) / 4.0;
+    }
+  }
+}
+
+void gauss_seidel (double **src, double **dest, int y_len, int x_len, double delta_x, double(*fn)(int x, int y)) {
+  for (int y = 1; y < (y_len-1); y++) {
+    for (int x = 1; x < (x_len-1); x++) {
+      dest[y][x] = (src[y][x+1] + dest[y][x-1] + src[y+1][x] + dest[y-1][x] + fn(x, y) * pow(delta_x, 2.0)) / 4.0;
+    }
+  }
+}
+
+void calc_approx (double **result, double **grid, int y_len, int x_len, ApproxMethod method) {
+  int trial = 0;
+
+  while (true) {
+    trial++;
+    double **applied_grid = initialize_grid(y_len, x_len);
+
+    copy_grid(grid, applied_grid, y_len, x_len);
+    if (method == Iterative) {
+      iterative(grid, applied_grid, y_len, x_len, 1.0, g);
+    } else {
+      gauss_seidel(grid, applied_grid, y_len, x_len, 1.0, g);
+    }
+    if (is_converged(grid, applied_grid, y_len, x_len)) {
+      copy_grid(applied_grid, grid, y_len, x_len);
+      free_grid(applied_grid, y_len);
+      break;
+    }
+    copy_grid(applied_grid, grid, y_len, x_len);
+    free_grid(applied_grid, y_len);
+  }
+
+  if (method == Iterative) {
+    printf("反復回数（線形反復法）: %d\n", trial);
+  } else {
+    printf("反復回数（ガウス・ザイデル法）: %d\n", trial);
+  }
+  copy_grid(grid, result, y_len, x_len);
+}
+
+int assert_approx (ApproxMethod method) {
+  int y_len = 4;
+  int x_len = 4;
+  double **result = initialize_grid(y_len, x_len);
+  double **grid = initialize_grid(y_len, x_len);
+  grid[1][3] = -4.5;
+  grid[2][3] = 9.0;
+  grid[3][1] = 22.5;
+  grid[3][2] = 36.0;
+
+  calc_approx(result, grid, y_len, x_len, method);
+
+  int failed = 0;
+  for (int y = 1; y <= 2; y++) {
+    for (int x = 1; x <= 2; x++) {
+      if (fabs(result[y][x] - analytic_f(x, y)) > DBL_EPSILON) {
+        failed = 1;
+      }
+    }
+  }
+
+  free_grid(result, y_len);
+  free_grid(grid, y_len);
+
+  return failed;
+}`);
+    >
+    +section {plots.h} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#ifndef PLOTS_H
+#define PLOTS_H
+
+#include <stdio.h>
+
+void output_jpeg (char *dest, char *input, int x0, int x1, int y0, int y1);
+
+void output_gif (char *dest, char *input, int frame_num, int x0, int x1, int y0, int y1, int row_num);
+
+#endif`);
+    >
+    +section {plots.c} <
+      +code-printer ?: (
+        CodePrinter.make-config CodeSyntax.c CodeTheme.basic-dark
+      ) (`#include "plots.h"
+
+void output_jpeg (char *dest, char *input, int x0, int x1, int y0, int y1) {
+  FILE *gnu_plot = popen("gnuplot", "w");
+  fprintf(gnu_plot, "set terminal jpeg\n");
+  {
+    char command[120];
+    sprintf(command, "set output \"out/%s.jpg\"\n", dest);
+    fprintf(gnu_plot, "%s", command);
+  }
+  {
+    char command[120];
+    sprintf(command, "set xrange [%d:%d]\n", x0, x1);
+    fprintf(gnu_plot, "%s", command);
+  }
+  {
+    char command[120];
+    sprintf(command, "set yrange [%d:%d]\n", y0, y1);
+    fprintf(gnu_plot, "%s", command);
+  }
+  fprintf(gnu_plot, "set xlabel \"x\"\n");
+  fprintf(gnu_plot, "set ylabel \"y\"\n");
+  fprintf(gnu_plot, "set size ratio 1\n");
+  fprintf(gnu_plot, "unset key\n");
+  {
+    char command[120];
+    sprintf(command, "plot \"%s\"\n", input);
+    fprintf(gnu_plot, "%s", command);
+  }
+  pclose(gnu_plot);
+}
+
+void output_gif (char *dest, char *input, int frame_num, int x0, int x1, int y0, int y1, int row_num) {
+  FILE *gnu_plot = popen("gnuplot", "w");
+  fprintf(gnu_plot, "set terminal gif animate delay 8 optimize\n");
+  {
+    char command[120];
+    sprintf(command, "set output \"out/%s.gif\"\n", dest);
+    fprintf(gnu_plot, "%s", command);
+  }
+  fprintf(gnu_plot, "set xlabel \"x\"\n");
+  fprintf(gnu_plot, "set ylabel \"y\"\n");
+  fprintf(gnu_plot, "set size ratio 1\n");
+  fprintf(gnu_plot, "unset key\n");
+  {
+    char command[120];
+    sprintf(command, "do for [i=0: %d] {\n", frame_num-1);
+    fprintf(gnu_plot, "%s", command);
+  }
+  {
+    char command[120];
+    sprintf(
+      command, "  plot [%d:%d][%d:%d] \"%s\" every ::i*%d+1::(i+1)*%d using 1:2\n",
+      x0, x1, y0, y1, input, row_num, row_num
+    );
+    printf("%s", command);
+    fprintf(gnu_plot, "%s", command);
+  }
+  fprintf(gnu_plot, "}\n");
+  pclose(gnu_plot);
+}`);
+    >
+  >
+>

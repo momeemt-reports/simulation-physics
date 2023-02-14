@@ -19,6 +19,11 @@ report3: report/week3/main.saty
 	satysfi ./report/week3/main.saty
 	pdfunite ./report/week3/hyoshi.pdf ./report/week3/main.pdf week3.pdf
 
+.PHONY: report4
+report4: report/week4/main.saty
+	satysfi ./report/week4/main.saty
+	pdfunite ./report/week4/hyoshi.pdf ./report/week4/main.pdf week4.pdf
+
 main.out: $(OBJECTS)
 	gcc $^ -g -o $@ -lm
 

@@ -42,17 +42,16 @@ int main () {
         for (int i = 0; i < NUMBER_OF_ASTRONOMICAL_BODY; i++) {
             int x = round(ab_arr[i].position.x);
             int y = round(ab_arr[i].position.y);
-            if (x <= 0 || 100 <= x) continue;
-            if (y <= 0 || 100 <= y) continue;
-            vector_t fp = {
-                MASS * gravitational_field_x[y][x],
-                MASS * gravitational_field_y[y][x]
-            };
-            ab_arr[i].velocity.x += (fp.x / MASS) * DT;
-            ab_arr[i].velocity.y += (fp.y / MASS) * DT;
-            ab_arr[i].position.x += ab_arr[i].velocity.x * DT;
-            ab_arr[i].position.y += ab_arr[i].velocity.y * DT;
-
+            if (0 < x && x < 100 && 0 < y && y < 100) {
+                vector_t fp = {
+                    MASS * gravitational_field_x[y][x],
+                    MASS * gravitational_field_y[y][x]
+                };
+                ab_arr[i].velocity.x += (fp.x / MASS) * DT;
+                ab_arr[i].velocity.y += (fp.y / MASS) * DT;
+                ab_arr[i].position.x += ab_arr[i].velocity.x * DT;
+                ab_arr[i].position.y += ab_arr[i].velocity.y * DT;
+            }
             fprintf(data_file, "%f %f\n", ab_arr[i].position.x, ab_arr[i].position.y);
         }
     }
